@@ -1,3 +1,4 @@
+mod sudoku_gen;
 use std::fmt;
 
 type Cell = Option<u8>;
@@ -86,9 +87,7 @@ impl fmt::Display for Board {
         let strings: String = self.data.clone().into_iter()
             .map(|row| format!("{}\n", stringify(&row))).collect();
 
-        println!("{}", strings);
-
-        return write!(f, "{}", "yes");
+        return write!(f, "{}", strings);
     }
 }
 
