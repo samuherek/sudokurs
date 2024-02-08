@@ -106,6 +106,7 @@ impl fmt::Display for Board {
 
 const SDK_SIZE: usize = 9;
 
+type CellIdx = usize;
 type ColIdx = u8;
 type RowIdx = u8;
 type SqrIdx = u8;
@@ -141,6 +142,44 @@ fn get_row(grid: &Grid, idx: RowIdx) -> GridRow {
         }
     }
     cells
+}
+
+fn idx_to_coords(idx: usize) -> (usize, usize) {
+    let row_idx = (idx as usize) / 9;
+    let col_idx = (idx as usize) % 9;
+    (row_idx, col_idx)
+}
+
+fn idx_to_sqr_idx(idx: usize) -> SqrIdx {
+    let (row_idx, col_idx) = idx_to_coords(idx);
+    let idx = if row_idx < 3 {
+        if col_idx < 3 {
+            0
+        } else if col_idx < 6 {
+            1
+        } else  {
+            2
+        }
+    } else if row_idx < 6 {
+        if col_idx < 3 {
+            3
+        } else if col_idx < 6 {
+            4
+        } else  {
+            5
+        }
+    } else if row_idx < 9{
+        if col_idx < 3 {
+            6
+        } else if col_idx < 6 {
+            7
+        } else  {
+            8
+        }
+    } else {
+        panic!("Inpossible row index");
+    };
+    idx
 }
 
 fn get_square(grid: &Grid, idx: SqrIdx) -> GridSqr {
@@ -238,15 +277,65 @@ fn print_grid(grid: &Grid) {
 //     true
 // }
 
-pub fn new_grid() -> Grid {
-    let mut grid = Vec::new(); 
-    // let mut available: Vec<u8> = (1..=9).collect();
-    let mut cursor = 0;
+fn is_valid_move(grid: &Grid, idx: CellIdx, num: u8) -> bool {
+    let (row_idx, col_idx) =  idx_to_coords(idx);
 
-    while cursor < 81 {
-        let idx = thread_rng().gen_range(0..=9).try_into().ok();
-        grid.push(idx);
-        cursor += 1;
+    let cols = get_col(grid, col_idx as u8);
+    let sqr_idx = idx_to_sqr_idx(idx);
+    let square = get_square(grid, sqr_idx);
+    print_grid(grid);
+    println!("-----");
+
+    if cols.contains(&Some(num)) {
+        return false
+    }
+
+    if square.contains(&Some(num)) {
+        return false;
+    }
+
+    true
+}
+
+pub fn new_grid() -> Grid {
+    let mut grid = vec![None; SDK_SIZE * SDK_SIZE]; 
+    let mut seed: Vec<Vec<u8>> = (1..=9).map(|_| (1..=9).collect()).collect();
+    let mut idx_cursor = 0;
+    let mut overflow = 0;
+
+    while idx_cursor < SDK_SIZE * SDK_SIZE  {
+        let (row_coord, col_coord) = idx_to_coords(idx_cursor);
+        println!("{idx_cursor}, {row_coord}, {col_coord}");
+        if let Some(row_seed) = seed.get_mut(row_coord) {
+            let row_seed_idx = thread_rng().gen_range(0..row_seed.len());
+            let next_n = row_seed.swap_remove(row_seed_idx);
+            println!("row seed::: {:?}", row_seed);
+            println!("next num::: {next_n}");
+            if is_valid_move(&grid, idx_cursor, next_n) {
+                grid[idx_cursor] = Some(next_n);
+                idx_cursor += 1;
+            } else {
+                if row_seed.len() == 0 {
+                    let prev = grid[idx_cursor - 1];
+                    row_seed.push(prev.unwrap());
+                    grid[idx_cursor - 1] = None;
+                    idx_cursor -= 1; 
+                }
+                row_seed.push(next_n);
+                // idx_cursor -= 1;
+            }
+        } else {
+            eprintln!("We have run out of seed rows");
+        }
+        overflow += 1;
+
+    }
+
+    grid
+}
+
+        // let idx: usize = thread_rng().gen_range(0..=9);
+        // grid.push(idx);
         // if !available.get(cursor).is_some() {
         //     let idx = thread_rng().gen_range(0..available[cursor].len());
             // let value = available[cursor][idx];
@@ -255,12 +344,6 @@ pub fn new_grid() -> Grid {
             //
             // }
         // }
-    }
-     // println!("grid::: {:?}", grid);
-
-    return grid.iter().map(|x| x.unwrap()).collect();
-}
-
 fn main() {
     let board = Board::new(); 
     println!("{}", board);
