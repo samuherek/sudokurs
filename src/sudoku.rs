@@ -82,10 +82,8 @@ impl Sudoku {
 
         true
     }
-}
 
-impl fmt::Display for Sudoku {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    pub fn print(&self) {
         let mut value = String::new();
 
         for (idx, x) in self.data.iter().enumerate() {
@@ -110,8 +108,31 @@ impl fmt::Display for Sudoku {
                 value.push('\n');
             }
         }
+        println!("{}", value);
+    }
+}
 
+impl fmt::Display for Sudoku {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let value: String = self.data.iter().map(get_cell_char).collect();
         write!(f, "{}", value)
+    }
+}
+
+impl From<String> for Sudoku {
+    fn from(value: String) -> Self {
+        let input = value.chars()
+            .map(|x| {
+                let num = (x as u8) - 48;
+                if (0..=9).contains(&num) {
+                    Some(num)
+                } else  {
+                    None
+                }
+            })
+            .collect();
+
+        Sudoku::new(input)
     }
 }
 
@@ -130,7 +151,7 @@ fn idx_to_coords(idx: usize) -> (usize, usize) {
 
 fn idx_to_sqr_idx(idx: usize) -> SqrIdx {
     let (row_idx, col_idx) = idx_to_coords(idx);
-    let idx = if row_idx < 3 {
+    if row_idx < 3 {
         if col_idx < 3 {
             0
         } else if col_idx < 6 {
@@ -156,6 +177,5 @@ fn idx_to_sqr_idx(idx: usize) -> SqrIdx {
         }
     } else {
         panic!("Inpossible row index");
-    };
-    idx
+    }
 }
