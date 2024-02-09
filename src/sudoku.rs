@@ -6,11 +6,12 @@ const SDK_SIZE: usize = 9;
 const SIZE_RANGE: Range<usize> = 0..SDK_SIZE;
 
 type Cell = Option<u8>;
-type CellIdx = usize;
+pub type CellIdx = usize;
 type SqrIdx = u8;
 
+#[derive(Clone)]
 pub struct Sudoku {
-    data: Vec<Cell>,
+    pub data: Vec<Cell>,
 }
 
 impl Sudoku {
@@ -52,7 +53,7 @@ impl Sudoku {
         return false
     }
 
-    fn is_valid_move(&self, idx: CellIdx, num: u8) -> bool {
+    pub fn is_valid_move(&self, idx: CellIdx, num: u8) -> bool {
         let (row_idx, col_idx) =  idx_to_coords(idx);
 
         let row_start = row_idx * SDK_SIZE;
@@ -81,6 +82,14 @@ impl Sudoku {
         }
 
         true
+    }
+
+    pub fn set_cell(&mut self, idx: CellIdx, val: Cell) {
+        self.data[idx] = val;
+    }
+
+    pub fn get_cell(&self, idx: CellIdx) -> Cell {
+        self.data[idx] 
     }
 
     pub fn print(&self) {
@@ -119,8 +128,8 @@ impl fmt::Display for Sudoku {
     }
 }
 
-impl From<String> for Sudoku {
-    fn from(value: String) -> Self {
+impl From<&str> for Sudoku {
+    fn from(value: &str) -> Self {
         let input = value.chars()
             .map(|x| {
                 let num = (x as u8) - 48;
