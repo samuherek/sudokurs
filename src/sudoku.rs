@@ -112,7 +112,7 @@ impl Sudoku {
     }
 
     fn prepare(&mut self) {
-        let count = thread_rng().gen_range(15..30);
+        let count = thread_rng().gen_range(20..50);
         for _ in 0..count {
             let idx = thread_rng().gen_range(0..81);
             self.data[idx] = None;
