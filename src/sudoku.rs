@@ -1,6 +1,7 @@
-use rand::{thread_rng, seq::SliceRandom};
+use rand::{thread_rng, Rng, seq::SliceRandom};
 use std::ops::Range;
-use std::fmt;
+use std::{fs, fmt};
+use std::path::Path;
 
 const SDK_SIZE: usize = 9;
 const SIZE_RANGE: Range<usize> = 0..SDK_SIZE;
@@ -15,12 +16,12 @@ pub struct Sudoku {
 }
 
 impl Sudoku {
-    pub fn new(game: Option<Vec<u8>>) -> Self {
+    fn new(game: Option<Vec<Cell>>) -> Self {
         let mut data =  vec![None; SDK_SIZE * SDK_SIZE];
 
         if let Some(values) = game {
             for (i, item) in values.iter().enumerate() {
-                data[i] = Some(*item);
+                data[i] = *item;
             }
         }
 
@@ -29,7 +30,7 @@ impl Sudoku {
         }
     }
 
-    pub fn fill_grid(&mut self, cursor: usize) -> bool {
+    fn fill_grid(&mut self, cursor: usize) -> bool {
         let is_some = self.data.get(cursor).is_some_and(|x| x.is_some());
         if cursor >= SDK_SIZE * SDK_SIZE || is_some {
             return true;
@@ -53,7 +54,7 @@ impl Sudoku {
         return false
     }
 
-    pub fn is_valid_move(&self, idx: CellIdx, num: u8) -> bool {
+    fn is_valid_move(&self, idx: CellIdx, num: u8) -> bool {
         let (row_idx, col_idx) =  idx_to_coords(idx);
 
         let row_start = row_idx * SDK_SIZE;
@@ -84,15 +85,41 @@ impl Sudoku {
         true
     }
 
-    pub fn set_cell(&mut self, idx: CellIdx, val: Cell) {
+    fn set_cell(&mut self, idx: CellIdx, val: Cell) {
         self.data[idx] = val;
     }
 
-    pub fn get_cell(&self, idx: CellIdx) -> Cell {
+    fn get_cell(&self, idx: CellIdx) -> Cell {
         self.data[idx] 
     }
 
-    pub fn print(&self) {
+    fn is_unique(&mut self, count: &mut usize) -> bool {
+        if let Some(next_idx) = self.data.iter().position(Option::is_none)  {
+            for num in 1..=9 {
+                if self.is_valid_move(next_idx, num) {
+                    self.set_cell(next_idx, Some(num));
+                    if !self.is_unique(count) {
+                        return false;
+                    }
+                    self.set_cell(next_idx, None);
+                }
+            }
+        } else {
+            *count += 1;
+        }
+
+        return *count <= 1;
+    }
+
+    fn prepare(&mut self) {
+        let count = thread_rng().gen_range(15..30);
+        for _ in 0..count {
+            let idx = thread_rng().gen_range(0..81);
+            self.data[idx] = None;
+        }
+    }
+
+    fn print(&self) {
         let mut value = String::new();
 
         for (idx, x) in self.data.iter().enumerate() {
@@ -130,18 +157,17 @@ impl fmt::Display for Sudoku {
 
 impl From<&str> for Sudoku {
     fn from(value: &str) -> Self {
-        let input = value.chars()
-            .map(|x| {
-                let num = (x as u8) - 48;
-                if (0..=9).contains(&num) {
+        let input: Vec<Option<u8>> = value.trim().chars()
+            .map(|ch| match ch {
+                '1'..='9' => {
+                    let num = (ch as u8) - 48;
                     Some(num)
-                } else  {
-                    None
-                }
+                },
+                _ => None
             })
-            .collect();
+        .collect();
 
-        Sudoku::new(input)
+        Sudoku::new(Some(input))
     }
 }
 
@@ -187,4 +213,28 @@ fn idx_to_sqr_idx(idx: usize) -> SqrIdx {
     } else {
         panic!("Inpossible row index");
     }
+}
+
+
+pub fn generate(out_path: &Path, limit: usize) {
+    let mut output: Vec<(Sudoku, Sudoku)> = Vec::new();
+
+    while output.len() < limit {
+        let mut sdk = Sudoku::new(None);
+        sdk.fill_grid(0);
+        let mut count = 0;
+        let mut game = sdk.clone();
+        game.prepare();
+
+        if game.is_unique(&mut count) {
+            output.push((sdk, game));
+        }
+    }
+
+    let value: String = output.iter().map(|(base, play)| {
+        format!("{}\n{}\n=\n", base.to_string(), play.to_string())
+
+    }).collect();
+
+    fs::write(out_path, value).unwrap();
 }
