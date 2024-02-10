@@ -24,7 +24,7 @@ fn main() -> anyhow::Result<()>{
 
     match &cli.command {
         Some(Commands::Gen{value}) => sudoku::generate(Path::new(value), 100),
-        None => server::server::run(),
+        None => server::server::run()?,
     }
 
     return Ok(());
