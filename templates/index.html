@@ -2,5 +2,22 @@
 
 {% block body %} 
 <h1>Sudoku</h1>
+
+<div id="sudoku" data-id="{{ id }}">
+    {% for row in sudoku %}
+    {% set outer_loop = loop.index0 %}
+    <div class="row">
+        {% for item in row %}
+        <div class="cell" data-coord="{{outer_loop}}-{{loop.index0}}">
+            {% if item.is_some() %}
+            {{ item.unwrap() }}
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% endfor %}
+</div>
+
+<script src="/static/js/sudoku.js"></script>
 {% endblock %}
 

@@ -24,3 +24,16 @@ h1 {
     margin-bottom: 4rem;
 }
 
+.row {
+    display: flex;
+}
+
+.cell {
+    border: 1px solid white;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+

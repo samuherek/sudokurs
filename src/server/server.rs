@@ -28,15 +28,39 @@ mod api {
 }
 
 mod templates {
-    use actix_web::Responder;
+    use actix_web::{Result, HttpResponse};
     use askama::Template;
+    use std::{fs, path::Path};
+    use crate::sudoku::Sudoku;
 
     #[derive(Template)]
     #[template(path = "index.html")]
-    pub struct Index {}
+    pub struct Index {
+        id: u8,
+        sudoku: Vec<Vec<Option<u8>>> 
+    }
 
-    pub async fn index() -> impl Responder {
-        return Index{}; 
+    pub async fn index() -> Result<HttpResponse> {
+        match fs::read_to_string(Path::new("output1.txt")) {
+            Ok(data) => {
+                let (first, _) = data.split_once("=").unwrap_or_default();
+                let play = first.lines().nth(1).unwrap_or_default();
+
+                let template = Index {
+                    id: 1,
+                    sudoku: Sudoku::from(play.trim()).get_grid()
+                }.render();
+
+                match template {
+                    Ok(html) => Ok(HttpResponse::Ok().content_type("text/html").body(html)),
+                    Err(_) => Ok(HttpResponse::InternalServerError().body("Internal Server Error")),
+                }
+            },
+            Err(_) => {
+                eprintln!("Err:: could not load the sudoku file data");
+                return Ok(HttpResponse::InternalServerError().body("Could not load sudoku"));
+            }
+        }
     }
 }
 

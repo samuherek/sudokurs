@@ -119,6 +119,10 @@ impl Sudoku {
         }
     }
 
+    pub fn get_grid(&self) -> Vec<Vec<Option<u8>>> {
+        self.data.chunks(9).map(|x| x.to_vec()).collect()
+    }
+
     fn print(&self) {
         let mut value = String::new();
 
