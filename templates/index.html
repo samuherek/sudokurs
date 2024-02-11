@@ -9,7 +9,7 @@
         {% set outer_loop = loop.index0 %}
         <div class="row">
             {% for item in row %}
-            <div class="cell" data-coord="{{outer_loop}}-{{loop.index0}}">
+            <div class="cell {% if item.is_some() %}locked{% endif %}" data-coord="{{outer_loop}}-{{loop.index0}}">
                 {% if item.is_some() %}
                 <span>{{ item.unwrap() }}</span>
                 {% endif %}
@@ -27,6 +27,6 @@
     </sudoku-nums>
 </div>
 
-<script src="/static/js/sudoku.js" defer></script>
+<script src="/static/js/sudoku.js" type="module"></script>
 {% endblock %}
 

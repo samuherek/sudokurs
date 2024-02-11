@@ -1,29 +1,23 @@
 use actix_web::{
+    dev::Server,
     App,
     web, 
     HttpServer,
     middleware::Logger,
 };
+use tokio;
+use std::net::TcpListener;
 use actix_files;
 use env_logger::Env;
 
 mod api {
-    use serde::{Serialize, Deserialize};
     use actix_web::{
         Responder,
         HttpResponse,
     };
 
-    #[derive(Serialize, Deserialize)]
-    struct ApiPing {
-        status: String,
-    }
-
-
     pub async fn ping() -> impl Responder {
-        return HttpResponse::Ok().json(ApiPing{
-            status: String::from("success"),
-        });
+        HttpResponse::Ok()
     }
 }
 
@@ -67,14 +61,14 @@ mod templates {
 }
 
 
-pub async fn run() -> std::io::Result<()> {
+pub fn run(listener: TcpListener) -> Result<Server, std::io::Error> {
     env_logger::init_from_env(Env::default().default_filter_or("info"));
 
-    HttpServer::new(|| {
+    let server = HttpServer::new(|| {
         return App::new()
             .wrap(Logger::default())
             .service(
-                web::scope("/api/v1")
+                web::scope("/api")
                 .route("", web::get().to(api::ping))
                 )
             .service(
@@ -84,7 +78,18 @@ pub async fn run() -> std::io::Result<()> {
                 );
 
     })
-    .bind(("0.0.0.0", 8080))?
-    .run()
-    .await
+    .listen(listener)?
+    .run();
+
+    Ok(server)
 }
+
+pub async fn spawn_app() -> String {
+    let listener = TcpListener::bind("127.0.0.1:0").expect("Failed to bind server port");
+    let port = listener.local_addr().unwrap().port();
+    let address = format!("http://127.0.0.1:{}", port);
+    let server = run(listener).expect("Failed to run server");
+    let _ = tokio::spawn(server);
+    address
+}
+
