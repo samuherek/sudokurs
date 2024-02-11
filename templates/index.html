@@ -3,21 +3,30 @@
 {% block body %} 
 <h1>Sudoku</h1>
 
-<div id="sudoku" data-id="{{ id }}">
-    {% for row in sudoku %}
-    {% set outer_loop = loop.index0 %}
-    <div class="row">
-        {% for item in row %}
-        <div class="cell" data-coord="{{outer_loop}}-{{loop.index0}}">
-            {% if item.is_some() %}
-            {{ item.unwrap() }}
-            {% endif %}
+<div class="wrap">
+    <sudoku-board id="sudoku" data-id="{{ id }}">
+        {% for row in sudoku %}
+        {% set outer_loop = loop.index0 %}
+        <div class="row">
+            {% for item in row %}
+            <div class="cell" data-coord="{{outer_loop}}-{{loop.index0}}">
+                {% if item.is_some() %}
+                <span>{{ item.unwrap() }}</span>
+                {% endif %}
+            </div>
+            {% endfor %}
         </div>
         {% endfor %}
-    </div>
-    {% endfor %}
+    </sudoku-board>
+    <sudoku-nums id="sudoku-nums" class="options">
+        {% for i in numbers %}
+        <div id="pick-{{i}}" class="cell">
+            <span>{{ i }}</span>
+        </div>
+        {% endfor %}
+    </sudoku-nums>
 </div>
 
-<script src="/static/js/sudoku.js"></script>
+<script src="/static/js/sudoku.js" defer></script>
 {% endblock %}
 
