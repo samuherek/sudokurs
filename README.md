@@ -8,3 +8,8 @@ TODO:
 - setup web components
 - setup askama
 - setup tracing
+
+
+Sudoku info:
+- https://www.sudokuwiki.org/Sudoku_Creation_and_Grading.pdf
+- 
